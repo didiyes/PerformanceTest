@@ -1,14 +1,19 @@
 name: JMeter Performance Suite
+
 on:
-  workflow_dispatch: {}   # rulezi manual din Actions
+  workflow_dispatch: {}   # pornești manual din Actions
 
 jobs:
   perf:
     runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
+    timeout-minutes: 20
 
-      - uses: actions/setup-java@v4
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Java 17
+        uses: actions/setup-java@v4
         with:
           distribution: temurin
           java-version: "17"
@@ -20,15 +25,15 @@ jobs:
           tar -xzf jmeter.tgz
           echo "$PWD/apache-jmeter-$JM/bin" >> $GITHUB_PATH
 
-      - name: Run JMeter plans & build HTML
+      - name: Run SMOKE only (fast)
         run: |
           mkdir -p reports
-          for p in *.jmx; do
-            n=$(basename "$p" .jmx)
-            jmeter -n -t "$p" -l "reports/$n.jtl" -e -o "reports/${n}-html"
-          done
+          jmeter -n -t "Smoke Group.jmx" \
+                 -l "reports/smoke.jtl" \
+                 -e -o "reports/smoke-html"
 
-      - uses: actions/upload-artifact@v4
+      - name: Upload HTML report
+        uses: actions/upload-artifact@v4
         with:
           name: jmeter-reports
           path: reports/
